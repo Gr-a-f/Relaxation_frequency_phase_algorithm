@@ -21,13 +21,8 @@ def test_get_spectrum():
     t = np.arange(0, duration, 1/fs)
     v = np.sin(2 * np.pi * freq * t)
 
-    # Zero padding (10x длины сигнала)
-    #signal_padded = np.pad(signal, (0, 10*len(signal)), 'constant')
-    #time_padded = np.arange(0, len(signal_padded)) / fs
-
     F, V = get_spectrum3([t, v])
 
     peak_freq = F[np.argmax(V)]
 
-    # Проверка, что погрешность < 1 кГц
     assert abs(peak_freq - freq) < 1e3, f"Ожидалось {freq}, получили {peak_freq}"
