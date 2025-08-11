@@ -11,3 +11,5 @@ venv/
 .ipynb_checkpoints/
 
 .pytest_cache/
+
+temp.py
