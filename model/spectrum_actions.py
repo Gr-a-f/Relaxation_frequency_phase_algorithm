@@ -82,3 +82,16 @@ def parabolic_peak(freqs, spectrum, peak_idx):
     dx = 0.5 * (y0 - y2) / denom
     df = freqs[1] - freqs[0]
     return freqs[k] + dx * df
+
+def filter_butter_bandpass(List, Fcutoff, scope, order=2):
+    lowcut=Fcutoff-scope
+    highcut=Fcutoff+scope
+    time_array = np.array(List[0])
+    signal_array = np.array(List[1])
+    Fs = 1 / np.mean(np.diff(time_array))
+    nyq = 0.5 * Fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    b, a = signal.butter(order, [low, high], btype='band')
+    filtered = signal.filtfilt(b, a, signal_array)
+    return [time_array, filtered]

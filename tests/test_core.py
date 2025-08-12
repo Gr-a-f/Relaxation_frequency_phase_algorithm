@@ -26,3 +26,23 @@ def test_get_spectrum():
     peak_freq = F[np.argmax(V)]
 
     assert abs(peak_freq - freq) < 1e3, f"Ожидалось {freq}, получили {peak_freq}"
+
+def test_filter_butter_bandpass():
+    fs = 625e6
+    duration = 48e-6
+    F_main=440e3
+
+    t = np.arange(0, duration, 1/fs)
+    v1 = np.sin(2 * np.pi * F_main * t)
+    v2= 3*np.sin(2 * np.pi * 100e3 * t)
+    v3= 2*np.sin(2 * np.pi * 700e3 * t)
+
+    v_summ=v1+v2+v3
+
+    t_filtered,v_filtered = filter_butter_bandpass([t,v_summ],440e3,100e3)
+
+    F,V=get_spectrum3([t_filtered,v_filtered])
+
+    peak_freq = F[np.argmax(V)]
+
+    assert abs(peak_freq - F_main) < 1e3, f"Ожидалось {F_main}, получили {peak_freq}"
