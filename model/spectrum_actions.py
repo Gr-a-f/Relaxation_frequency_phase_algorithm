@@ -95,3 +95,44 @@ def filter_butter_bandpass(List, Fcutoff, scope, order=2):
     b, a = signal.butter(order, [low, high], btype='band')
     filtered = signal.filtfilt(b, a, signal_array)
     return [time_array, filtered]
+
+def get_phase1(list1,list2):
+    t=list1[0]
+
+    sig1=list1[1]
+    sig2=list2[1]
+
+    # Hilbert transform для извлечения моментальной фазы
+    phase1 = np.unwrap(np.angle(signal.hilbert(sig1)))
+    phase2 = np.unwrap(np.angle(signal.hilbert(sig2)))
+    
+    phase_diff = np.rad2deg(phase2 - phase1)
+
+    return phase_diff
+
+def get_phase2(sig1, sig2, fs, f0, window_size):
+    n = len(sig1)
+    step = window_size // 2  # перекрытие окон
+    times = []
+    phases = []
+
+    for start in range(0, n - window_size, step):
+        end = start + window_size
+        win1 = sig1[start:end]
+        win2 = sig2[start:end]
+
+        fft1 = np.fft.fft(win1)
+        fft2 = np.fft.fft(win2)
+        freqs = np.fft.fftfreq(window_size, 1/fs)
+        idx = np.argmin(np.abs(freqs - f0))
+
+        phase1 = np.angle(fft1[idx])
+        phase2 = np.angle(fft2[idx])
+        diff = np.rad2deg(phase2 - phase1)
+        diff = (diff + 180) % 360 - 180  # нормализация
+
+        times.append(start / fs)
+        phases.append(diff)
+
+    return np.array(times), np.array(phases)
+
