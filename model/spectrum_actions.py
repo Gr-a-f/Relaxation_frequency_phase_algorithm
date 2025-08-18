@@ -96,7 +96,7 @@ def filter_butter_bandpass(List, Fcutoff, scope, order=2):
     filtered = signal.filtfilt(b, a, signal_array)
     return [time_array, filtered]
 
-def get_phase1(list1,list2):
+def get_phase_hilbert(list1,list2):
     t=list1[0]
 
     sig1=list1[1]
@@ -110,26 +110,49 @@ def get_phase1(list1,list2):
 
     return phase_diff
 
-def get_phase2(sig1, sig2, fs, f0, window_size):
+def get_phase_FFT(sig1, sig2, fs, f0, n_periods=10, overlap=0.5):
+    """
+    Считает разницу фаз между двумя сигналами sig1 и sig2
+    через FFT с оконным анализом.
+    
+    sig1, sig2 : одномерные массивы сигналов
+    fs : частота дискретизации
+    f0 : основная частота сигнала (Гц)
+    n_periods : сколько периодов сигнала помещать в окно
+    overlap : доля перекрытия окон (0.0–0.9)
+    """
     n = len(sig1)
-    step = window_size // 2  # перекрытие окон
+
+    # число отсчётов на один период
+    samples_per_period = int(round(fs / f0))
+    window_size = samples_per_period * n_periods
+    step = int(window_size * (1 - overlap))
+
+    # окно Хэмминга
+    win = np.hamming(window_size)
+
     times = []
     phases = []
 
     for start in range(0, n - window_size, step):
         end = start + window_size
-        win1 = sig1[start:end]
-        win2 = sig2[start:end]
+        win1 = sig1[start:end] * win
+        win2 = sig2[start:end] * win
 
+        # FFT
         fft1 = np.fft.fft(win1)
         fft2 = np.fft.fft(win2)
         freqs = np.fft.fftfreq(window_size, 1/fs)
+
+        # индекс ближайшей частоты
         idx = np.argmin(np.abs(freqs - f0))
 
         phase1 = np.angle(fft1[idx])
         phase2 = np.angle(fft2[idx])
-        diff = np.rad2deg(phase2 - phase1)
-        diff = (diff + 180) % 360 - 180  # нормализация
+        diff = phase2 - phase1
+
+        # нормализация разности фаз в диапазон [-180, 180]
+        diff = np.rad2deg((diff + np.pi) % (2*np.pi) - np.pi)
 
         times.append(start / fs)
         phases.append(diff)
