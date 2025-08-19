@@ -86,15 +86,18 @@ def parabolic_peak(freqs, spectrum, peak_idx):
 def filter_butter_bandpass(List, Fcutoff, scope, order=2):
     lowcut=Fcutoff-scope
     highcut=Fcutoff+scope
-    time_array = np.array(List[0])
-    signal_array = np.array(List[1])
-    Fs = 1 / np.mean(np.diff(time_array))
+
+    t = np.array(List[0])
+    signal = np.array(List[1])
+
+    Fs = 1 / np.mean(np.diff(t))
     nyq = 0.5 * Fs
     low = lowcut / nyq
     high = highcut / nyq
     b, a = signal.butter(order, [low, high], btype='band')
-    filtered = signal.filtfilt(b, a, signal_array)
-    return [time_array, filtered]
+    signal_filtered = signal.filtfilt(b, a, signal)
+    
+    return [t, signal_filtered]
 
 def get_phase_hilbert(list1,list2):
     t=list1[0]
@@ -108,7 +111,7 @@ def get_phase_hilbert(list1,list2):
     
     phase_diff = np.rad2deg(phase2 - phase1)
 
-    return phase_diff
+    return t, phase_diff
 
 def get_phase_FFT(sig1, sig2, fs, f0, n_periods=10, overlap=0.5):
     """
