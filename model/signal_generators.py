@@ -38,5 +38,5 @@ def RC_transfer(t,U,R,C):
     # Общий ток
     I_total = I_R + I_C
 
-    return I_total
+    return [t,I_total]
 
