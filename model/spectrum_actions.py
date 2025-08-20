@@ -99,11 +99,7 @@ def filter_butter_bandpass(List, Fcutoff, scope, order=2):
     
     return time, signal_filtered
 
-def get_phase_hilbert(list1,list2):
-    time=list1[0]
-
-    sig1=list1[1]
-    sig2=list2[1]
+def get_phase_hilbert(time,sig1,sig2):
 
     # Hilbert transform для извлечения моментальной фазы
     phase1 = np.unwrap(np.angle(signal.hilbert(sig1)))
