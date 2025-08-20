@@ -40,3 +40,11 @@ def RC_transfer(t,U,R,C):
 
     return t, I_total
 
+def convert_to_counts(sig,value):
+    
+    Counts=0
+    for i in  sig:
+        if (i<value):
+            Counts+=1
+
+    return Counts
