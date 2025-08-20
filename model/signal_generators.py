@@ -15,7 +15,7 @@ def generate_sin_440():
     t = np.linspace(0, duration, int(duration * fs))  
     U = np.sin(2 * np.pi * F_main * t)
 
-    return [t,U]
+    return t,U
 
 
 def generate_meander():
@@ -26,7 +26,7 @@ def generate_meander():
     t = np.linspace(0, duration, int(duration * fs))  
     U = signal.square(2 * np.pi * F_main * t)
 
-    return [t,U]
+    return t,U
 
 
 def RC_transfer(t,U,R,C):
@@ -38,5 +38,5 @@ def RC_transfer(t,U,R,C):
     # Общий ток
     I_total = I_R + I_C
 
-    return I_total
+    return t, I_total
 
