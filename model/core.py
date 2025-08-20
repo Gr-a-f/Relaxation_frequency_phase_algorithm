@@ -18,4 +18,5 @@ def make_data_list(mypath):
     TimeArray =array(data.in_s)
     CombinedList= [TimeArray,ValueArray]
     return CombinedList
+
     
