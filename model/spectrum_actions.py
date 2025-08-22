@@ -83,20 +83,15 @@ def parabolic_peak(freqs, spectrum, peak_idx):
     df = freqs[1] - freqs[0]
     return freqs[k] + dx * df
 
-def filter_butter_bandpass(List, Fcutoff, scope, order=2):
-    lowcut=Fcutoff-scope
-    highcut=Fcutoff+scope
-
-    time = np.array(List[0])
-    signal = np.array(List[1])
-
-    Fs = 1 / np.mean(np.diff(time))
-    nyq = 0.5 * Fs
-    low = lowcut / nyq
-    high = highcut / nyq
-    b, a = signal.butter(order, [low, high], btype='band')
-    signal_filtered = signal.filtfilt(b, a, signal)
-    
+def filter_butter_bandpass(time, samples, Fcutoff, scope, order=2): 
+    lowcut=Fcutoff-scope 
+    highcut=Fcutoff+scope 
+    Fs = 1 / np.mean(np.diff(time)) 
+    nyq = 0.5 * Fs 
+    low = lowcut / nyq 
+    high = highcut / nyq 
+    b, a = signal.butter(order, [low, high], btype='band') 
+    signal_filtered = signal.filtfilt(b, a, samples) 
     return time, signal_filtered
 
 def get_phase_hilbert(time,sig1,sig2):
