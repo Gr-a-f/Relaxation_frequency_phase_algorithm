@@ -30,7 +30,7 @@ def generate_meander():
 
 
 def RC_transfer(t,U,R,C):
-    dU_dt = np.gradient(U, t) 
+    dU_dt = np.gradient(U, t, edge_order=2)
 
     I_R = U / R
     I_C = C * dU_dt

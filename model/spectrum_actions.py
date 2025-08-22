@@ -179,3 +179,39 @@ def get_phase_FFT(sig1, sig2, fs, f0, n_periods=10, overlap=0.5):
 
     return np.array(times), np.array(phases)
 
+def get_phase_lockin(sig1, sig2, fs, f0, n_periods):
+    """
+    Разница фаз между двумя сигналами методом lock-in.
+    
+    sig1, sig2 : массивы сигналов одинаковой длины
+    fs  : частота дискретизации
+    f0  : основная частота
+    window_size : окно усреднения (в отсчётах)
+    """
+    t = np.arange(len(sig1)) / fs
+
+    samples_per_period = int(round(fs / f0))
+    window_size = samples_per_period * n_periods
+
+    # опорные сигналы
+    ref_cos = np.cos(2 * np.pi * f0 * t)
+    ref_sin = np.sin(2 * np.pi * f0 * t)
+
+    # демодуляция для первого сигнала
+    I1_raw = sig1 * ref_cos
+    Q1_raw = sig1 * ref_sin
+    I1 = np.convolve(I1_raw, np.ones(window_size)/window_size, mode="same")
+    Q1 = np.convolve(Q1_raw, np.ones(window_size)/window_size, mode="same")
+    phase1 = np.unwrap(np.arctan2(Q1, I1))
+
+    # демодуляция для второго сигнала
+    I2_raw = sig2 * ref_cos
+    Q2_raw = sig2 * ref_sin
+    I2 = np.convolve(I2_raw, np.ones(window_size)/window_size, mode="same")
+    Q2 = np.convolve(Q2_raw, np.ones(window_size)/window_size, mode="same")
+    phase2 = np.unwrap(np.arctan2(Q2, I2))
+
+    # разница фаз
+    phase_diff = np.rad2deg(phase2 - phase1)
+
+    return t, phase_diff
