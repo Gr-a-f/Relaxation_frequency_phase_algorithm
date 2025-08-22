@@ -94,6 +94,32 @@ def filter_butter_bandpass(time, samples, Fcutoff, scope, order=2):
     signal_filtered = signal.filtfilt(b, a, samples) 
     return time, signal_filtered
 
+def filter_elliptic_bandpass(time, samples, Fcutoff, scope, order=6, rp=0.5, rs=60):
+    """
+    Эллиптический полосовой фильтр
+    Fcutoff - центральная частота (Гц)
+    scope   - полуширина полосы (Гц)
+    order   - порядок фильтра
+    rp      - допустимая рябь в полосе пропускания (dB)
+    rs      - подавление вне полосы (dB)
+    """
+    lowcut = Fcutoff - scope
+    highcut = Fcutoff + scope
+
+    Fs = 1 / (time[1] - time[0])
+    nyq = 0.5 * Fs
+    low = lowcut / nyq
+    high = highcut / nyq
+
+    # проектируем эллиптический фильтр
+    b, a = signal.ellip(order, rp, rs, [low, high], btype='band')
+
+    # применяем нулевофазовую фильтрацию
+    filtered = signal.filtfilt(b, a, samples)
+
+    return time, filtered
+
+
 def get_phase_hilbert(time,sig1,sig2):
 
     # Hilbert transform для извлечения моментальной фазы
