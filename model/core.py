@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import pandas as pd
 from numpy import array
@@ -16,5 +17,4 @@ def make_data_list(mypath):
         data.rename(columns = {'C2 in V':'C2_in_V'}, inplace = True)
         ValueArray= array(data.C2_in_V)
     TimeArray =array(data.in_s)
-    CombinedList= [TimeArray,ValueArray]
-    return CombinedList
+    return TimeArray,ValueArray
