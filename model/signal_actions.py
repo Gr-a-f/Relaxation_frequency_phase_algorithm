@@ -7,15 +7,8 @@ from math import sin, pi
 from scipy import signal
 
 
-def generate_sin_440():
-    fs = 625e6
-    duration = 48e-6
-    F_main=440e3
-
-    t = np.linspace(0, duration, int(duration * fs))  
-    U = np.sin(2 * np.pi * F_main * t)
-
-    return t,U
+def generate_sin(t,F,A=1):
+    return A*np.sin(2 * np.pi * F * t)
 
 
 def generate_meander():
