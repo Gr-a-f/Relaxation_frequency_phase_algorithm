@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from model import get_spectrum3
 
 def show_I_U(t,I,U, startpoint=0,endpoint=None):
     if (endpoint==None):
@@ -6,15 +7,51 @@ def show_I_U(t,I,U, startpoint=0,endpoint=None):
 
     plt.figure(figsize=(10, 6))
 
-    plt.subplot(2, 1, 1)
+    plt.subplot(4, 1, 1)
     plt.plot(t[startpoint:endpoint] * 1e3, U[startpoint:endpoint] , label='U(t)', color='blue')
     plt.title('U')
     plt.ylabel('(V)')
     plt.grid()
 
-    plt.subplot(2, 1, 2)
+    plt.subplot(4, 1, 1)
+    plt.plot(t[startpoint:endpoint] * 1e3, U[startpoint:endpoint] , label='U(t)', color='blue')
+    plt.title('U')
+    plt.ylabel('(V)')
+    plt.grid()
+
+    plt.subplot(4, 1, 2)
     plt.plot(t[startpoint:endpoint]  * 1e3, I[startpoint:endpoint]  * 1e3, label='I_total(t)', color='red')
     plt.title('I')
     plt.xlabel('time ms')
     plt.ylabel('(mA)')
     plt.grid()
+
+def show_I_U_2(t,I,U, startpoint=0,endpoint=None):
+    if (endpoint==None):
+        endpoint = len(I)
+
+    fig = plt.figure(figsize=(14, 7))
+    gs = fig.add_gridspec(2, 2, width_ratios=[2, 1])
+
+    ax1 = fig.add_subplot(gs[0, 0])
+    ax2 = fig.add_subplot(gs[0, 1])
+    ax3 = fig.add_subplot(gs[1, 0])
+    ax4 = fig.add_subplot(gs[1, 1])
+
+    ax1.plot(t[startpoint:endpoint] * 1e3, U[startpoint:endpoint] , color='blue')
+    ax1.set_title("U(t)")
+    ax1.grid(True)
+
+    F,V=get_spectrum3(t,U)
+    ax2.plot(F,V, 'blue')
+    ax2.set_title("F(U)")
+    ax2.grid(True)
+
+    ax3.plot(t[startpoint:endpoint]  * 1e3, I[startpoint:endpoint]  * 1e3, color='red')
+    ax3.set_title("I(t)")
+    ax3.grid(True)
+
+    F,V=get_spectrum3(t,I)
+    ax4.plot(F,V, 'red')
+    ax4.set_title("F(I)")
+    ax4.grid(True)
