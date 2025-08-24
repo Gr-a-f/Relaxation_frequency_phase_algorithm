@@ -18,3 +18,6 @@ def make_data_list(mypath):
         ValueArray= array(data.C2_in_V)
     TimeArray =array(data.in_s)
     return TimeArray,ValueArray
+
+def get_phase_RC_real(F_main,R,C):
+    return math.degrees(np.atan(2*pi*F_main*R*C))
