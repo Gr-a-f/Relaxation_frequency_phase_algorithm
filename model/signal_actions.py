@@ -34,9 +34,9 @@ def RC_transfer(t,U,R,C):
     return t, I_total
 
 def convert_to_counts(sig,value):
-    
+    t_shifted = sig - sig.min()
     Counts=0
-    for i in  sig:
+    for i in  t_shifted:
         if (i<value):
             Counts+=1
 
