@@ -118,21 +118,20 @@ def filter_elliptic_bandpass(time, samples, Fcutoff, scope, order=6, rp=0.5, rs=
     return time, filtered
 
 
-def get_phase_hilbert(time,sig1,sig2):
-
-    # Hilbert transform для извлечения моментальной фазы
+def get_phase_hilbert(time,sig1,sig2,f_peak=440e3):
     phase1 = np.unwrap(np.angle(signal.hilbert(sig1)))
     phase2 = np.unwrap(np.angle(signal.hilbert(sig2)))
     
     phase_diff = np.rad2deg(phase2 - phase1)
-
     return time, phase_diff
 
-def get_phase_FFT(sig1, sig2, fs, f0, n_periods=10, overlap=0.5):
+def get_phase_FFT(time, sig1, sig2, f0, n_periods=10, overlap=0.5):
     """
     Считает разницу фаз между двумя сигналами sig1 и sig2
-    через FFT с оконным анализом.
+    через FFT с оконным анализом. Временные точки результата
+    ставятся в соответствии с массивом времени time (центр окна).
     
+    time : массив времени (такой же длины, как сигналы)
     sig1, sig2 : одномерные массивы сигналов
     fs : частота дискретизации
     f0 : основная частота сигнала (Гц)
@@ -141,9 +140,16 @@ def get_phase_FFT(sig1, sig2, fs, f0, n_periods=10, overlap=0.5):
     """
     n = len(sig1)
 
-    # число отсчётов на один период
-    samples_per_period = int(round(fs / f0))
-    window_size = samples_per_period * n_periods
+    fs = 1.0 / np.mean(np.diff(time))
+
+    # число точек на один период
+    T_counts = int(round(fs / f0))
+    window_size = T_counts * n_periods
+
+    # если сигнал слишком короткий — ограничим окно
+    if window_size > len(sig1):
+        window_size = max(1, len(sig1) // 2)
+        
     step = int(window_size * (1 - overlap))
 
     # окно Хэмминга
@@ -158,6 +164,7 @@ def get_phase_FFT(sig1, sig2, fs, f0, n_periods=10, overlap=0.5):
         win2 = sig2[start:end] * win
 
         # FFT
+                # FFT
         fft1 = np.fft.fft(win1)
         fft2 = np.fft.fft(win2)
         freqs = np.fft.fftfreq(window_size, 1/fs)
@@ -165,35 +172,43 @@ def get_phase_FFT(sig1, sig2, fs, f0, n_periods=10, overlap=0.5):
         # индекс ближайшей частоты
         idx = np.argmin(np.abs(freqs - f0))
 
-        phase1 = np.angle(fft1[idx])
-        phase2 = np.angle(fft2[idx])
-        diff = phase2 - phase1
+        # фазовая разница через кросс-спектр
+        cross = fft2[idx] * np.conj(fft1[idx])
+        diff = np.angle(cross)
 
-        # нормализация разности фаз в диапазон [-180, 180]
+        # нормализация [-180, 180]
         diff = np.rad2deg((diff + np.pi) % (2*np.pi) - np.pi)
 
-        times.append(start / fs)
+        # вместо "start/fs" берём центр окна по реальному времени
+        t_center = np.mean(time[start:end])
+
+        times.append(t_center)
         phases.append(diff)
 
     return np.array(times), np.array(phases)
 
-def get_phase_lockin(sig1, sig2, fs, f0, n_periods):
+def get_phase_lockin(time, sig1, sig2, f0, n_periods=10):
     """
     Разница фаз между двумя сигналами методом lock-in.
-    
+
+    time : массив времени (той же длины, что и сигналы)
     sig1, sig2 : массивы сигналов одинаковой длины
     fs  : частота дискретизации
     f0  : основная частота
-    window_size : окно усреднения (в отсчётах)
+    n_periods : количество периодов в окне усреднения
     """
-    t = np.arange(len(sig1)) / fs
+
+    fs = 1.0 / np.mean(np.diff(time))
 
     samples_per_period = int(round(fs / f0))
     window_size = samples_per_period * n_periods
 
+    if window_size > len(sig1):
+        window_size = max(1, len(sig1) // 2)
+
     # опорные сигналы
-    ref_cos = np.cos(2 * np.pi * f0 * t)
-    ref_sin = np.sin(2 * np.pi * f0 * t)
+    ref_cos = np.cos(2 * np.pi * f0 * time)
+    ref_sin = np.sin(2 * np.pi * f0 * time)
 
     # демодуляция для первого сигнала
     I1_raw = sig1 * ref_cos
@@ -210,6 +225,6 @@ def get_phase_lockin(sig1, sig2, fs, f0, n_periods):
     phase2 = np.unwrap(np.arctan2(Q2, I2))
 
     # разница фаз
-    phase_diff = np.rad2deg(phase2 - phase1)
+    phase_diff = np.rad2deg(phase1 - phase2)
 
-    return t, phase_diff
+    return time, phase_diff
