@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import pandas as pd
 from numpy import array
@@ -7,8 +8,8 @@ from math import sin, pi
 from scipy import signal
 
 
-def generate_sin(t,F,A=1):
-    return A*np.sin(2 * np.pi * F * t)
+def generate_sin(t,F,A=1,phase=0):
+    return A * np.sin(2 * np.pi * F * t + np.deg2rad(phase))
 
 
 def generate_meander():
