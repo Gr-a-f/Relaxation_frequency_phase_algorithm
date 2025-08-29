@@ -37,7 +37,7 @@ def get_spectrum2(my_list, max_freq=1e6, pad_factor=10):
     mask = freq <= max_freq
     return freq[mask], spectrum[mask]
 
-def get_spectrum3(t,samples, max_freq=1e6, pad_factor=50, window='hann'):
+def get_spectrum3(t,samples, max_freq=1e9, pad_factor=50, window='hann'):
 
     Fs = 1.0 / np.mean(np.diff(t))
     N = len(samples)
