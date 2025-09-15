@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from model import get_spectrum3
 
 def show_I_U(t,I,U, startpoint=0,endpoint=None):
@@ -55,3 +57,33 @@ def show_I_U_2(t,I,U, startpoint=0,endpoint=None):
     ax4.plot(F,V, 'red')
     ax4.set_title("F(I)")
     ax4.grid(True)
+
+def show_I_U_3(t,I,U, startpoint=0,endpoint=None):
+    if (endpoint==None):
+        endpoint = len(I)
+
+    fig = make_subplots(
+        rows=2, cols=2,
+        subplot_titles=("U(t)", "F(U)", "I(t)", "F(I)"),
+        column_widths=[0.7, 0.3],   # относительная ширина столбцов
+        row_heights=[0.5, 0.5],     # относительная высота строк
+        horizontal_spacing=0.05,    # расстояние между колонками (0 = нет)
+        vertical_spacing=0.07       # расстояние между строками
+    )
+
+    fig.add_trace(go.Scatter(x=t[startpoint:endpoint], y=U[startpoint:endpoint]), row=1, col=1)
+    F,V=get_spectrum3(t,U)
+    fig.add_trace(go.Scatter(x=F, y=V), row=1, col=2)
+    fig.add_trace(go.Scatter(x=t[startpoint:endpoint], y=I[startpoint:endpoint]), row=2, col=1)
+    F,V=get_spectrum3(t,I)
+    fig.add_trace(go.Scatter(x=F, y=V), row=2, col=2)
+
+    # Минимизируем внешние отступы (по краям всего рисунка)
+    fig.update_layout(
+        showlegend=False,
+        height=600,
+        width=900,
+        margin=dict(l=30, r=30, t=40, b=30)
+    )
+
+    fig.show()
