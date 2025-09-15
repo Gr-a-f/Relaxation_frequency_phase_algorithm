@@ -126,6 +126,29 @@ def filter_elliptic_bandpass(time, samples, Fcutoff, scope, order=6, rp=0.5, rs=
 
     return time, filtered
 
+def get_phase_maxpoint_diff(time,sig1,sig2,f_peak):
+    T=1/f_peak
+    T_counts= convert_to_counts(time,T)
+
+    t_result=[]
+    phase_result=[]
+    for T_current in range(1, int(len(sig1)/T_counts), 1):
+
+        time_start=T_counts*(T_current-1)
+        time_end=T_counts*(T_current)
+
+        max_t_sig1=time[np.argmax(sig1[time_start:time_end])+time_start]
+        max_t_sig2=time[np.argmax(sig2[time_start:time_end])+time_start]
+
+        time_s=max_t_sig1-max_t_sig2
+        phase_delta_time=360*time_s*f_peak
+
+        t_center = (time[time_start]+time[time_end])/2
+
+        t_result.append(t_center)
+        phase_result.append(phase_delta_time)
+
+    return  t_result, phase_result
 
 def get_phase_hilbert(time,sig1,sig2,f_peak=440e3):
     phase1 = np.unwrap(np.angle(signal.hilbert(sig1)))
