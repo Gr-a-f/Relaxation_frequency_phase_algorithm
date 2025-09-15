@@ -47,3 +47,11 @@ def get_time_of_max_value(time, sig, startpoint=0,endpoint=None):
 
     return time_of_max_value
 
+def get_F_rel_mid(sig, F_peak):
+    central_index=int(len(sig)/2)
+    #phase_central=sig[central_index]
+    #f_rel = F_peak * np.cos(phase_central*0.0174533) / np.sin(phase_central*0.0174533)
+
+    phase_mean=np.mean(sig[central_index-100:central_index+100])
+    f_rel = F_peak * np.cos(phase_mean*0.0174533) / np.sin(phase_mean*0.0174533)
+    return f_rel
