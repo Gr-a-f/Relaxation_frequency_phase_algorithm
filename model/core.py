@@ -19,5 +19,15 @@ def make_real_data_list(mypath):
     TimeArray =array(data.in_s)
     return TimeArray,ValueArray
 
+def make_microcap_data_list(path):
+    df = pd.read_csv(path, skiprows=6, sep=",", engine="python")
+
+    df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
+
+    time = df.iloc[:, 0].astype(float).values
+    values = df.iloc[:, 1].astype(float).values
+
+    return time, values
+
 def get_phase_RC_real(F_main,R,C):
     return math.degrees(np.atan(2*pi*F_main*R*C))
