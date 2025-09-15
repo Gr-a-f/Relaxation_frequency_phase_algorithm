@@ -12,5 +12,6 @@ venv/
 
 .pytest_cache/
 
+temp/
 temp.py
 temp.ipynb
