@@ -7,7 +7,7 @@ from numpy.fft import rfft, rfftfreq
 from math import sin, pi
 from scipy import signal
 
-def make_data_list(mypath):
+def make_real_data_list(mypath):
     data = pd.read_csv(mypath)
     data.rename(columns = {'in s':'in_s'}, inplace = True)
     if 'C1 in V' in data.columns:
