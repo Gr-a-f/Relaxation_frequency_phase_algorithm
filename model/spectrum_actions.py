@@ -6,6 +6,15 @@ from numpy.fft import rfft, rfftfreq
 from math import sin, pi
 from scipy import signal
 
+def convert_to_counts(sig,value):
+    t_shifted = sig - sig.min()
+    Counts=0
+    for i in  t_shifted:
+        if (i<value):
+            Counts+=1
+
+    return Counts
+
 def get_spectrum1(MyList):
     time_array = MyList[0]
     signal_array = MyList[1]
