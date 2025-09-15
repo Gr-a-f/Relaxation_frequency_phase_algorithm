@@ -38,3 +38,12 @@ def get_mean_value(sig, range=100):
 
     return mean_value
 
+def get_time_of_max_value(time, sig, startpoint=0,endpoint=None):
+    if (endpoint==None):
+        endpoint=len(sig)
+
+    max_value=np.argmax(sig[startpoint:endpoint])
+    time_of_max_value=time[max_value]
+
+    return time_of_max_value
+
