@@ -31,3 +31,10 @@ def make_microcap_data_list(path):
 
 def get_phase_RC_real(F_main,R,C):
     return math.degrees(np.atan(2*pi*F_main*R*C))
+
+def get_mean_value(sig, range=100):
+    central_index=int(len(sig)/2)
+    mean_value=np.mean(sig[central_index-range:central_index+range])
+
+    return mean_value
+
