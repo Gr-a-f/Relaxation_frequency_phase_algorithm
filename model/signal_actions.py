@@ -34,3 +34,21 @@ def RC_transfer(t,U,R,C):
 
     return t, I_total
 
+def add_realistic_noise(time, signal, F0, Fs,
+                        low_freq_amp=0.3,
+                        mirror_amp=0.3,
+                        harmonic_amp=0.5,
+                        white_noise_amp=0.05):
+    """
+    Добавляет типичные физические помехи к сигналу с несущей F0:
+      - низкочастотный дрейф (около 0 Гц)
+      - зеркальная гармоника (Fs - F0)
+      - вторая гармоника (2*F0)
+      - белый шум
+    """
+    drift = low_freq_amp * np.sin(2*np.pi*1e3*time)          # ~1 кГц
+    mirror = mirror_amp * np.sin(2*np.pi*(Fs-F0)*time)
+    harmonic = harmonic_amp * np.sin(2*np.pi*(2*F0)*time)
+    white = white_noise_amp * np.random.randn(len(signal))
+    return signal + drift + mirror + harmonic + white
+
