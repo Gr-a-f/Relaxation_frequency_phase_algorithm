@@ -90,65 +90,40 @@ def parabolic_peak(freqs, spectrum, peak_idx):
     df = freqs[1] - freqs[0]
     return freqs[k] + dx * df
 
-def filter_butter_bandpass(time, samples, Fcutoff, scope, order=2): 
-    lowcut=Fcutoff-scope 
-    highcut=Fcutoff+scope 
-    Fs = 1 / np.mean(np.diff(time)) 
-    nyq = 0.5 * Fs 
-    low = lowcut / nyq 
-    high = highcut / nyq 
-    b, a = signal.butter(order, [low, high], btype='band') 
-    signal_filtered = signal.filtfilt(b, a, samples) 
-    return time, signal_filtered
-
-def filter_elliptic_bandpass(time, samples, Fcutoff, scope, order=6, rp=0.5, rs=60):
+def get_phase_maxpoint_diff(time, sig1, sig2, f_peak):
     """
-    Эллиптический полосовой фильтр
-    Fcutoff - центральная частота (Гц)
-    scope   - полуширина полосы (Гц)
-    order   - порядок фильтра
-    rp      - допустимая рябь в полосе пропускания (dB)
-    rs      - подавление вне полосы (dB)
+    Определяет фазовую разницу между двумя сигналами по сдвигу их максимумов
+    в каждом периоде основной частоты.
     """
-    lowcut = Fcutoff - scope
-    highcut = Fcutoff + scope
 
-    Fs = 1 / (time[1] - time[0])
-    nyq = 0.5 * Fs
-    low = lowcut / nyq
-    high = highcut / nyq
+    T = 1 / f_peak
+    T_counts = convert_to_counts(time, T)
+    
+    t_result = []
+    phase_result = []
 
-    # проектируем эллиптический фильтр
-    b, a = signal.ellip(order, rp, rs, [low, high], btype='band')
+    n_periods = len(sig1) // T_counts
+    for T_current in range(1, n_periods):
+        time_start = T_counts * (T_current - 1)
+        time_end = T_counts * T_current
 
-    # применяем нулевофазовую фильтрацию
-    filtered = signal.filtfilt(b, a, samples)
+        max_t_sig1 = time[np.argmax(sig1[time_start:time_end]) + time_start]
+        max_t_sig2 = time[np.argmax(sig2[time_start:time_end]) + time_start]
 
-    return time, filtered
+        time_shift = max_t_sig1 - max_t_sig2
+        phase_delta = 360 * f_peak * time_shift
+        phase_delta = abs(phase_delta) % 360
 
-def get_phase_maxpoint_diff(time,sig1,sig2,f_peak):
-    T=1/f_peak
-    T_counts= convert_to_counts(time,T)
+        if phase_delta > 180:
+            phase_delta = 360 - phase_delta
 
-    t_result=[]
-    phase_result=[]
-    for T_current in range(1, int(len(sig1)/T_counts), 1):
-
-        time_start=T_counts*(T_current-1)
-        time_end=T_counts*(T_current)
-
-        max_t_sig1=time[np.argmax(sig1[time_start:time_end])+time_start]
-        max_t_sig2=time[np.argmax(sig2[time_start:time_end])+time_start]
-
-        time_s=max_t_sig1-max_t_sig2
-        phase_delta_time=360*time_s*f_peak
-
-        t_center = (time[time_start]+time[time_end])/2
+        # Центральная точка окна
+        t_center = (time[time_start] + time[time_end]) / 2
 
         t_result.append(t_center)
-        phase_result.append(phase_delta_time)
+        phase_result.append(phase_delta)
 
-    return  t_result, phase_result
+    return t_result, phase_result
 
 def get_phase_hilbert(time,sig1,sig2,f_peak=440e3):
     phase1 = np.unwrap(np.angle(signal.hilbert(sig1)))
@@ -264,7 +239,6 @@ def get_phase_lockin(time, sig1, sig2, f0, n_periods=10):
 def get_phase_xcorr(time, sig1, sig2, f0, n_periods=10, overlap=0.5):
     """
     Оценка разности фаз между двумя сигналами методом скользящей кросс-корреляции.
-
     Parameters
     ----------
     time : array
