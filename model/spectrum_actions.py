@@ -302,3 +302,60 @@ def get_phase_xcorr(time, sig1, sig2, f0, n_periods=10, overlap=0.5):
         phase_array.append(phase)
 
     return np.array(times), np.array(phase_array)
+
+def get_phase_xcorr2(time, sig1, sig2, f0, n_periods=10, overlap=0.5):
+    """
+    Оценка разности фаз между двумя сигналами методом скользящей кросс-корреляции
+    с субсэмпловой интерполяцией для высокой точности (до ~0.01 градуса).
+    """
+    # шаг дискретизации
+    dt = np.mean(np.diff(time))
+    fs = 1.0 / dt
+
+    # длина окна в сэмплах
+    samples_per_period = int(round(fs / f0))
+    window_size = n_periods * samples_per_period
+    step_size = int(window_size * (1 - overlap))
+
+    n = len(sig1)
+    times = []
+    tau_array = []
+    phase_array = []
+
+    for start in range(0, n - window_size, step_size):
+        end = start + window_size
+        x1 = sig1[start:end]
+        x2 = sig2[start:end]
+
+        # нормализация
+        x1 = (x1 - np.mean(x1)) / (np.std(x1) + 1e-12)
+        x2 = (x2 - np.mean(x2)) / (np.std(x2) + 1e-12)
+
+        # кросс-корреляция
+        corr = signal.correlate(x1, x2, mode="full")
+        lags = np.arange(-len(x1) + 1, len(x1))
+        peak_index = np.argmax(corr)
+
+        # --- субсэмпловая интерполяция (парабола) ---
+        if 0 < peak_index < len(corr) - 1:
+            y0, y1, y2 = corr[peak_index - 1], corr[peak_index], corr[peak_index + 1]
+            # смещение от целого лага (в отсчётах)
+            frac_shift = 0.5 * (y0 - y2) / (y0 - 2 * y1 + y2 + 1e-20)
+        else:
+            frac_shift = 0.0
+
+        lag_samples = lags[peak_index] + frac_shift
+
+        # задержка в секундах
+        tau = lag_samples / fs
+
+        # фазовый сдвиг
+        phase = (2 * np.pi * f0 * tau) * 180 / np.pi
+        phase = (phase + 180) % 360 - 180
+
+        # сохраняем
+        times.append((start + end) / 2 * dt)
+        tau_array.append(tau)
+        phase_array.append(phase)
+
+    return np.array(times), np.array(phase_array)
