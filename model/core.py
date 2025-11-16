@@ -29,15 +29,6 @@ def make_microcap_data_list(path):
 
     return time, values
 
-def get_phase_RC_real(F_main,R,C):
-    return math.degrees(np.atan(2*pi*F_main*R*C))
-
-def get_mean_value(sig, range=100):
-    central_index=int(len(sig)/2)
-    mean_value=np.mean(sig[central_index-range:central_index+range])
-
-    return mean_value
-
 def get_time_of_max_value(time, sig, startpoint=0,endpoint=None):
     if (endpoint==None):
         endpoint=len(sig)
@@ -47,11 +38,20 @@ def get_time_of_max_value(time, sig, startpoint=0,endpoint=None):
 
     return time_of_max_value
 
-def get_F_rel_mid(sig, F_peak):
-    central_index=int(len(sig)/2)
-    #phase_central=sig[central_index]
-    #f_rel = F_peak * np.cos(phase_central*0.0174533) / np.sin(phase_central*0.0174533)
 
-    phase_mean=np.mean(sig[central_index-100:central_index+100])
-    f_rel = F_peak * np.cos(phase_mean*0.0174533) / np.sin(phase_mean*0.0174533)
-    return f_rel
+def moving_average(time, values, window_size):
+    """
+    Скользящее среднее с центровкой по времени.
+    Возвращает массив времени и значений одинаковой длины.
+    """
+    if window_size < 1 or window_size > len(values):
+        raise ValueError("window_size должен быть >=1 и <= длины массива")
+
+    kernel = np.ones(window_size) / window_size
+    smoothed_values = np.convolve(values, kernel, mode='valid')
+
+    # Для каждой точки берем центр окна
+    half_window = (window_size - 1) / 2
+    new_time = time[np.arange(len(smoothed_values)) + int(np.floor(half_window))]
+
+    return new_time, smoothed_values
