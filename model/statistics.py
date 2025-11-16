@@ -76,10 +76,3 @@ def get_mean_from_all(*arrays):
     middle_mean=np.mean(all_mean)
 
     return middle_mean
-    
-
-    
-
-        
-
-    
