@@ -2,6 +2,18 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from model import get_spectrum3
+    
+def plot(x_in,y_in,point=None, delta=None):
+    leng=len(x_in)
+
+    if (point==None):
+        point = int(leng/2)
+
+    if (delta==None or delta>=leng):
+        delta = int(leng/2)
+
+    plt.plot(x_in[point-delta:point+delta], y_in[point-delta:point+delta])
+
 
 def show_I_U(t,I,U, startpoint=0,endpoint=None):
     if (endpoint==None):
