@@ -2,6 +2,17 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from model import get_spectrum3
+
+def show_one_graph(x_in,y_in,startpoint=0,endpoint=None):
+    if (endpoint==None):
+        endpoint = len(x_in)
+
+    fig = go.Figure(data=go.Scatter(x=x_in[startpoint:endpoint], y=y_in[startpoint:endpoint], mode='lines+markers'))
+    fig.update_layout(
+        margin=dict(l=0, r=0, t=0, b=0),
+        width=600, height=400
+    )
+    fig.show()
     
 def plot(x_in,y_in,point=None, delta=None):
     leng=len(x_in)
