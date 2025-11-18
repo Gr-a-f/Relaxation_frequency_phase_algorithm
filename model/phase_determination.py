@@ -22,36 +22,58 @@ def parabolic_peak(freqs, spectrum, peak_idx):
     df = freqs[1] - freqs[0]
     return freqs[k] + dx * df
 
+def parabolic_peak_polyfit(y, x):
+    a, b, c = np.polyfit(x, y, 2)
+    if abs(a) < 1e-12:
+        return x[1]
+    return -b / (2*a)
+
 def get_phase_maxpoint_diff(time, sig1, sig2, f_peak):
     """
-    Определяет фазовую разницу между двумя сигналами по сдвигу их максимумов
-    в каждом периоде основной частоты.
+    Оценка фазовой разницы по сдвигу максимумов с субсэмпловой интерполяцией.
+    Возвращает (t_centers, phase_deg) — списки одинаковой длины.
     """
+    T = 1.0 / f_peak
+    dt = time[1] - time[0]
+    T_counts = max(3, int(round(T / dt)))  # минимум 3 точки на период для интерполяции
 
-    T = 1 / f_peak
-    T_counts = convert_to_counts(time, T)
-    
     t_result = []
     phase_result = []
 
     n_periods = len(sig1) // T_counts
-    for T_current in range(1, n_periods):
-        time_start = T_counts * (T_current - 1)
-        time_end = T_counts * T_current
+    for k in range(n_periods):
+        start = k * T_counts
+        end = start + T_counts
+        if end > len(sig1):
+            break
 
-        max_t_sig1 = time[np.argmax(sig1[time_start:time_end]) + time_start]
-        max_t_sig2 = time[np.argmax(sig2[time_start:time_end]) + time_start]
+        # максимум sig1
+        local1 = sig1[start:end]
+        idx1_local = np.argmax(local1)
+        idx1 = start + idx1_local
+        if idx1 - 1 < 0 or idx1 + 1 >= len(sig1):
+            continue
+        x1 = time[idx1-1:idx1+2]
+        y1 = sig1[idx1-1:idx1+2]
+        max_t_sig1 = parabolic_peak_polyfit(y1, x1)
+
+        # максимум sig2 (независимый индекс)
+        local2 = sig2[start:end]
+        idx2_local = np.argmax(local2)
+        idx2 = start + idx2_local
+        if idx2 - 1 < 0 or idx2 + 1 >= len(sig2):
+            continue
+        x2 = time[idx2-1:idx2+2]
+        y2 = sig2[idx2-1:idx2+2]
+        max_t_sig2 = parabolic_peak_polyfit(y2, x2)
 
         time_shift = max_t_sig1 - max_t_sig2
-        phase_delta = 360 * f_peak * time_shift
-        phase_delta = abs(phase_delta) % 360
+        phase_delta = (360.0 * f_peak * time_shift) % 360.0
+        phase_delta = abs(phase_delta)
+        if phase_delta > 180.0:
+            phase_delta = 360.0 - phase_delta
 
-        if phase_delta > 180:
-            phase_delta = 360 - phase_delta
-
-        # Центральная точка окна
-        t_center = (time[time_start] + time[time_end]) / 2
-
+        t_center = 0.5 * (time[start] + time[end-1])
         t_result.append(t_center)
         phase_result.append(phase_delta)
 
