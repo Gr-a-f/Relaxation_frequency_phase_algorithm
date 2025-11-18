@@ -291,3 +291,63 @@ def get_phase_xcorr2(time, sig1, sig2, f0, n_periods=10, overlap=0.5):
         phase_array.append(phase)
 
     return np.array(times), np.array(phase_array)
+
+def get_phase_xcorr3(
+        time,
+        sig1,
+        sig2,
+        f0,
+        win_size=None,
+        hop_size=None
+    ):
+    """
+    Возвращает фазовый сдвиг в ГРАДУСАХ в диапазоне [-180, 180).
+    Остальное — как раньше; если win_size/hop_size = None — выбираются автоматически.
+    """
+
+    fs = 1.0 / np.mean(np.diff(time))
+    N = len(sig1)
+
+    # автоподбор окна: 5 периодов (в сэмплах), минимум 3, максимум N
+    period = fs / f0
+    period = max(1, int(round(period)))
+
+    if win_size is None:
+        win_size = int(min(N, max(3 * period, 5 * period)))
+    if hop_size is None:
+        hop_size = max(1, win_size // 2)
+
+    times = []
+    phase_array = []
+    delay_array = []
+
+    def subdelay(x, y):
+        corr = np.correlate(y, x, mode='full')
+        lags = np.arange(-len(x) + 1, len(x))
+        peak_i = np.argmax(corr)
+
+        if 1 <= peak_i <= len(corr) - 2:
+            y1, y2, y3 = corr[peak_i-1:peak_i+2]
+            denom = (y1 - 2*y2 + y3)
+            delta = 0.5 * (y1 - y3) / denom if denom != 0 else 0.0
+        else:
+            delta = 0.0
+
+        return (lags[peak_i] + delta) / fs
+
+    for start in range(0, N - win_size + 1, hop_size):
+        stop = start + win_size
+        x = sig1[start:stop]
+        y = sig2[start:stop]
+
+        delay = subdelay(x, y)              # сек
+        phase_deg = 360.0 * f0 * delay     # может быть любой величины
+
+        # нормализуем в диапазон [-180, 180)
+        phase_signed = ((phase_deg + 180.0) % 360.0) - 180.0
+
+        times.append(time[start + win_size // 2])
+        phase_array.append(phase_signed)
+        delay_array.append(delay)
+
+    return np.array(times), np.array(phase_array)
