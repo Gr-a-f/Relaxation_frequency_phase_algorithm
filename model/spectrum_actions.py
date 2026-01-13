@@ -15,11 +15,9 @@ def convert_to_counts(sig,value):
 
     return Counts
 
-def get_spectrum1(MyList):
-    time_array = MyList[0]
-    signal_array = MyList[1]
+def get_spectrum1(time_array,signal_array):
     Fd=np.mean(np.diff(time_array))
-    SignalLength=len(MyList[0])
+    SignalLength=len(signal_array)
     spectr_V = rfft(signal_array)
     freq = rfftfreq(SignalLength,Fd)
     
@@ -27,9 +25,7 @@ def get_spectrum1(MyList):
     F=freq
     return [F,V]
 
-def get_spectrum2(my_list, max_freq=1e6, pad_factor=10):
-    time_array = my_list[0]
-    signal_array = my_list[1]
+def get_spectrum2(time_array,signal_array, max_freq=1e6, pad_factor=10):
     
     # Частота дискретизации
     Fs = 1 / np.mean(np.diff(time_array))
