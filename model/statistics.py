@@ -37,6 +37,13 @@ def get_F_rel_mid(sig, F_peak):
     return f_rel
 
 def get_kde_mode(data, bandwidth=None):
+    # если все значения одинаковые возвращаем первое значение чтобы не ловить ошибку KDE от вырождения ковариационной мартрицы
+    if (len(data)==1):
+        return data[0]
+
+    if np.allclose(data, data[0]):  
+        return data[0]
+    
     kde = gaussian_kde(data, bw_method=bandwidth)
     xs = np.linspace(min(data), max(data), 1000)
     ys = kde(xs)
