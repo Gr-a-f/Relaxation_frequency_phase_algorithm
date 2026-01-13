@@ -28,7 +28,7 @@ def parabolic_peak_polyfit(y, x):
         return x[1]
     return -b / (2*a)
 
-def get_phase_maxpoint_diff(time, sig1, sig2, f_peak):
+def get_phase_maxpoint(time, sig1, sig2, f_peak, n_periods=10):
     """
     Оценка фазовой разницы по сдвигу максимумов с субсэмпловой интерполяцией.
     Возвращает (t_centers, phase_deg) — списки одинаковой длины.
@@ -40,7 +40,7 @@ def get_phase_maxpoint_diff(time, sig1, sig2, f_peak):
     t_result = []
     phase_result = []
 
-    n_periods = len(sig1) // T_counts
+    n_periods = len(sig1) // T_counts # n_periods для maxpoint всегда должн быть равен периоду. Он вводится как параметр для схожей сигнатуры с другими методами
     for k in range(n_periods):
         start = k * T_counts
         end = start + T_counts
@@ -79,11 +79,13 @@ def get_phase_maxpoint_diff(time, sig1, sig2, f_peak):
 
     return t_result, phase_result
 
-def get_phase_hilbert(time,sig1,sig2,f_peak=440e3):
+def get_phase_hilbert(time, sig1, sig2, f_peak=440e3, n_periods=10):
     phase1 = np.unwrap(np.angle(signal.hilbert(sig1)))
     phase2 = np.unwrap(np.angle(signal.hilbert(sig2)))
     
     phase_diff = np.rad2deg(phase2 - phase1)
+    phase_diff = np.rad2deg(np.unwrap(np.angle(signal.hilbert(sig2)) - np.angle(signal.hilbert(sig1))))
+    phase_diff = (phase_diff + 180) % 360 - 180 
     return time, phase_diff
 
 def get_phase_FFT(time, sig1, sig2, f0, n_periods=10, overlap=0.5):
@@ -260,7 +262,7 @@ def get_phase_xcorr(time, sig1, sig2, f0, n_periods=10, overlap=0.5):
 def get_phase_xcorr2(time, sig1, sig2, f0, n_periods=10, overlap=0.5):
     """
     Оценка разности фаз между двумя сигналами методом скользящей кросс-корреляции
-    с субсэмпловой интерполяцией для высокой точности (до ~0.01 градуса).
+    с субсэмпловой интерполяцией для высокой точности.
     """
     # шаг дискретизации
     dt = np.mean(np.diff(time))
@@ -269,6 +271,11 @@ def get_phase_xcorr2(time, sig1, sig2, f0, n_periods=10, overlap=0.5):
     # длина окна в сэмплах
     samples_per_period = int(round(fs / f0))
     window_size = n_periods * samples_per_period
+
+    # если сигнал слишком короткий — ограничим окно
+    if window_size > len(sig1):
+        window_size = max(1, len(sig1) // 2)
+
     step_size = int(window_size * (1 - overlap))
 
     n = len(sig1)
