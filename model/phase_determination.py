@@ -6,6 +6,7 @@ from numpy.fft import rfft, rfftfreq
 from math import sin, pi
 from scipy import signal
 from model import convert_to_counts
+from model import get_spectrum3
 
 
 def parabolic_peak(freqs, spectrum, peak_idx):
@@ -380,3 +381,80 @@ def get_phase_xcorr3(
         delay_array.append(delay)
 
     return np.array(times), np.array(phase_array)
+
+def get_phase_PPV(
+        time,
+        sig1,
+        sig2,
+        f0=None,
+        win_size=None,
+        hop_size=None
+    ):
+    def get_phase_solo(t, wave):
+        F, V = get_spectrum3(t, wave)
+        idx = np.argmax(V)
+    
+        F_peak = F[idx]
+        A_peak = V[idx]
+    
+        ref = np.sin(2*np.pi*F_peak*t)
+    
+        mult = ref * wave
+        dc = np.mean(mult)
+    
+        cos_phi = 2 * dc / A_peak
+        cos_phi = np.clip(cos_phi, -1, 1)
+    
+        phi_est = np.rad2deg(np.arccos(cos_phi))
+        return phi_est
+        
+    phase1=get_phase_solo(time,sig1)
+    phase2=get_phase_solo(time,sig2)
+    dela_phase = np.array([phase1 - phase2])
+
+    return time,dela_phase
+
+import numpy as np
+
+def get_phase_VNA(
+        time,
+        sig1,
+        sig2,
+        f0,
+        win_size=None,
+        hop_size=None
+    ):
+    fs = 1.0 / np.mean(np.diff(time))
+
+    # опорный комплексный сигнал
+    ref = np.exp(-1j * 2 * np.pi * f0 * time)
+
+    # комплексная демодуляция
+    Z1 = sig1 * ref
+    Z2 = sig2 * ref
+
+    # усреднение (если окно не задано — по всему сигналу)
+    if win_size is None:
+        C1 = np.mean(Z1)
+        C2 = np.mean(Z2)
+        phase = np.angle(C1 / C2)
+        return time, np.atleast_1d(np.rad2deg(phase))
+
+    # оконный VNA (для массива фаз)
+    if hop_size is None:
+        hop_size = win_size // 2
+
+    phases = []
+    times = []
+
+    for start in range(0, len(time) - win_size, hop_size):
+        stop = start + win_size
+
+        C1 = np.mean(Z1[start:stop])
+        C2 = np.mean(Z2[start:stop])
+
+        phase = np.angle(C1 / C2)
+        phases.append(np.rad2deg(phase))
+        times.append(np.mean(time[start:stop]))
+
+    return np.array(times), np.array(phases)
