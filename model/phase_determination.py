@@ -196,7 +196,6 @@ def get_phase_lockin(time, sig1, sig2, f0, n_periods=10):
 def get_phase_xcorr(time, sig1, sig2, f0, n_periods=10, overlap=0.5):
     """
     Оценка разности фаз между двумя сигналами методом скользящей кросс-корреляции.
-    Parameters
     ----------
     time : array
         Временной массив, с
@@ -208,15 +207,6 @@ def get_phase_xcorr(time, sig1, sig2, f0, n_periods=10, overlap=0.5):
         Длина окна в периодах сигнала (default=10)
     overlap : float [0..1], optional
         Доля перекрытия соседних окон (default=0.5)
-
-    Returns
-    -------
-    times : array
-        Время (центры окон), с
-    tau_array : array
-        Разность во времени (задержка), с
-    phase_array : array
-        Разность фаз, градусы (от -180 до 180)
     """
     # шаг дискретизации
     dt = np.mean(np.diff(time))
@@ -332,7 +322,6 @@ def get_phase_xcorr3(
     ):
     """
     Возвращает фазовый сдвиг в ГРАДУСАХ в диапазоне [-180, 180).
-    Остальное — как раньше; если win_size/hop_size = None — выбираются автоматически.
     """
 
     fs = 1.0 / np.mean(np.diff(time))
