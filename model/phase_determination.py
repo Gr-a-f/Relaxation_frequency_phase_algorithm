@@ -371,6 +371,70 @@ def get_phase_xcorr3(
 
     return np.array(times), np.array(phase_array)
 
+def get_phase_xcor_zoom(
+    time,
+    sig1,
+    sig2,
+    f0,
+    n_grid=10,
+    n_iter=6,
+    tau_range=None,
+):
+    """
+    Итеративный поиск временного сдвига
+    с зумированием по максимуму корреляции.
+
+    Parameters
+    ----------
+    n_grid : int
+        Число точек на каждой итерации
+    n_iter : int
+        Число итераций зума
+    """
+
+    T = 1.0 / f0
+
+    if tau_range is None:
+        tau_range = (-T/2, T/2)
+
+    interp_sig2 = interp1d(
+        time,
+        sig2,
+        kind="cubic",
+        bounds_error=False,
+        fill_value=0.0
+    )
+
+    x1n = (sig1 - np.mean(sig1)) / (np.std(sig1) + 1e-12)
+
+    tau_min, tau_max = tau_range
+
+    for _ in range(n_iter):
+
+        tau_grid = np.linspace(tau_min, tau_max, n_grid)
+        corr = np.zeros(n_grid)
+
+        for i, tau in enumerate(tau_grid):
+            x2s = interp_sig2(time + tau)
+            x2n = (x2s - np.mean(x2s)) / (np.std(x2s) + 1e-12)
+
+            corr[i] =np.mean(x1n * x2n)
+
+        k = np.argmax(corr)
+
+        # защита от краёв
+        if k == 0:
+            tau_min, tau_max = tau_grid[0], tau_grid[1]
+        elif k == n_grid - 1:
+            tau_min, tau_max = tau_grid[-2], tau_grid[-1]
+        else:
+            tau_min, tau_max = tau_grid[k - 1], tau_grid[k + 1]
+
+    tau_best = 0.5 * (tau_min + tau_max)
+    phase_deg = 360 * f0 * tau_best
+    return phase_deg
+
+
 def get_phase_PPV(
         time,
         sig1,
