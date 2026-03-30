@@ -72,3 +72,60 @@ def get_spectrum3(t,samples, max_freq=1e6, pad_factor=50, window='hann'):
     mask = F <= max_freq
     return F[mask], S[mask]
 
+
+
+def refine_peak_frequency(
+    x,
+    fs,
+    iterations=5,
+    zoom_points=100,
+    window=True
+):
+    """
+    Итеративный поиск частоты максимальной гармоники
+    """
+
+    def local_dft(x, fs, freqs):
+        """
+        x     : сигнал (1D numpy array)
+        fs    : частота дискретизации
+        freqs : массив частот (Гц), для которых считаем DFT
+        """
+        n = np.arange(len(x))
+        result = np.zeros(len(freqs), dtype=np.complex128)
+
+        for i, f in enumerate(freqs):
+            result[i] = np.sum(x * np.exp(-2j * np.pi * f * n / fs))
+
+        return result
+    
+    N = len(x)
+
+    if window:
+        x = x * np.hanning(N)
+
+    # --- 1. Грубый FFT ---
+    spectrum = np.fft.rfft(x)
+    freqs_fft = np.fft.rfftfreq(N, 1 / fs)
+
+    idx_max = np.argmax(np.abs(spectrum))
+    f_center = freqs_fft[idx_max]
+
+    # Начальный шаг по частоте
+    df = freqs_fft[1] - freqs_fft[0]
+
+    # --- 2. Итеративный зум ---
+    for _ in range(iterations):
+        freq_grid = np.linspace(
+            f_center - df,
+            f_center + df,
+            zoom_points
+        )
+
+        dft_vals = local_dft(x, fs, freq_grid)
+        idx_max = np.argmax(np.abs(dft_vals))
+
+        f_center = freq_grid[idx_max]
+        df = (freq_grid[1] - freq_grid[0]) * 2
+
+    return f_center
