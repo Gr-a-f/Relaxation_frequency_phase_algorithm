@@ -138,34 +138,22 @@ def get_phase_HB(time, sig1, sig2, f_peak=440e3, n_periods=10): #Hilbert
     #return time, phases #если нужно вернуть массив времени и фаз на каждый период
 
 def get_phase_FFT(time, sig1, sig2, f0):
-    """
-    Считает фазовую разницу между sig1 и sig2
-    по FFT на всей длине сигнала.
 
-    Возвращает:
-        phase_deg : float (в диапазоне [-180, 180])
-    """
+    # окно
+    window = np.hanning(len(sig1))
+    sig1 = sig1 * window
+    sig2 = sig2 * window
 
-    # частота дискретизации
-    fs = 1.0 / np.mean(np.diff(time))
-    n = len(sig1)
+    # точный DFT на частоте f0
+    exp = np.exp(-1j * 2 * np.pi * f0 * time)
 
-    # FFT всего сигнала
-    fft2 = np.fft.fft(sig1)
-    fft1 = np.fft.fft(sig2)
-    freqs = np.fft.fftfreq(n, 1 / fs)
+    X1 = np.sum(sig1 * exp)
+    X2 = np.sum(sig2 * exp)
 
-    # индекс частоты, ближайшей к f0
-    idx = np.argmin(np.abs(freqs - f0))
-
-    # фазовая разница через кросс-спектр
-    cross = fft2[idx] * np.conj(fft1[idx])
+    cross = X1 * np.conj(X2)
     phase = np.angle(cross)
 
-    # нормализация в [-180, 180]
-    phase = np.rad2deg((phase + np.pi) % (2 * np.pi) - np.pi)
-
-    return phase
+    return np.rad2deg(phase)
 
 def get_phase_XCOR(
     time,

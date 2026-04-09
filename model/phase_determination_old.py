@@ -209,6 +209,36 @@ def get_phase_FFT(time, sig1, sig2, f0, n_periods=10, overlap=0.5):
 
     return np.array(times), np.array(phases)
 
+def get_phase_FFT2(time, sig1, sig2, f0):
+    """
+    Считает фазовую разницу между sig1 и sig2
+    по FFT на всей длине сигнала.
+
+    Возвращает:
+        phase_deg : float (в диапазоне [-180, 180])
+    """
+
+    # частота дискретизации
+    fs = 1.0 / np.mean(np.diff(time))
+    n = len(sig1)
+
+    # FFT всего сигнала
+    fft2 = np.fft.fft(sig1)
+    fft1 = np.fft.fft(sig2)
+    freqs = np.fft.fftfreq(n, 1 / fs)
+
+    # индекс частоты, ближайшей к f0
+    idx = np.argmin(np.abs(freqs - f0))
+
+    # фазовая разница через кросс-спектр
+    cross = fft2[idx] * np.conj(fft1[idx])
+    phase = np.angle(cross)
+
+    # нормализация в [-180, 180]
+    phase = np.rad2deg((phase + np.pi) % (2 * np.pi) - np.pi)
+
+    return phase
+
 def get_phase_lockin(time, sig1, sig2, f0, n_periods=10):
     """
     Разница фаз между двумя сигналами методом lock-in.
