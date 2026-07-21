@@ -72,7 +72,7 @@ def show_I_U_2(t,I,U, startpoint=0,endpoint=None):
     ax2.set_title("F(U)")
     ax2.grid(True)
 
-    ax3.plot(t[startpoint:endpoint]  * 1e3, I[startpoint:endpoint]  * 1e3, color='red')
+    ax3.plot(t[startpoint:endpoint]  * 1e3, I[startpoint:endpoint] , color='red')
     ax3.set_title("I(t)")
     ax3.grid(True)
 
