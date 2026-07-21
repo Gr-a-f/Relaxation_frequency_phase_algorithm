@@ -332,15 +332,25 @@ def wrap_phase_deg(phi):
     """
     return (phi + 180) % 360 - 180
 
-def get_phase_swff(time, sig, f0):
-    w = 2*np.pi*f0
-    s = np.sin(w*time)
-    c = np.cos(w*time)
+def get_phase_swff(time, sig1, sig2, f0, win_size=None, hop_size=None):
 
-    B = np.mean(sig * s)
-    C = np.mean(sig * c)
+    def get_phase_local(time, sig, f0):
+        w = 2*np.pi*f0
+        s = np.sin(w*time)
+        c = np.cos(w*time)
 
-    return np.degrees(np.arctan2(C, B))
+        B = np.mean(sig * s)
+        C = np.mean(sig * c)
+
+        return np.degrees(np.arctan2(C, B))
+
+    phase1 = get_phase_local(time, sig1, f0)
+    phase2 = get_phase_local(time, sig2, f0)
+
+    phase_diff = phase1 - phase2
+    return wrap_phase_deg(phase_diff)
+
+
 
 def get_phase_swf3p(time, sig1, sig2, f0, win_size=None, hop_size=None):
 
